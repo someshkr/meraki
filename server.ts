@@ -6,6 +6,11 @@ import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
+// Fallback: load environment variables from .env.example if key is not defined yet
+if (!process.env.GEMINI_API_KEY) {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.example') });
+}
+
 const isProd = process.env.NODE_ENV === 'production';
 const PORT = 3000;
 
@@ -17,10 +22,18 @@ async function startServer() {
   let aiClient: GoogleGenAI | null = null;
   function getGeminiClient(): GoogleGenAI {
     if (!aiClient) {
-      const apiKey = process.env.GEMINI_API_KEY;
+      let apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
         throw new Error('GEMINI_API_KEY environment variable is not defined');
       }
+
+      // Trim surrounding quotes if present
+      if (apiKey.startsWith('"') && apiKey.endsWith('"')) {
+        apiKey = apiKey.slice(1, -1);
+      } else if (apiKey.startsWith("'") && apiKey.endsWith("'")) {
+        apiKey = apiKey.slice(1, -1);
+      }
+
       aiClient = new GoogleGenAI({
         apiKey,
         httpOptions: {
@@ -43,15 +56,26 @@ async function startServer() {
       }
 
       const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: systemInstruction ? { systemInstruction } : undefined,
-      });
+      let response;
+      try {
+        console.log('Attempting content generation with primary model: gemini-3.5-flash');
+        response = await ai.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: prompt,
+          config: systemInstruction ? { systemInstruction } : undefined,
+        });
+      } catch (primaryError: any) {
+        console.warn('Primary model gemini-3.5-flash failed or experienced high demand. Trying fallback model: gemini-3.1-flash-lite...', primaryError);
+        response = await ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite',
+          contents: prompt,
+          config: systemInstruction ? { systemInstruction } : undefined,
+        });
+      }
 
       res.json({ text: response.text });
     } catch (error: any) {
-      console.error('Gemini API call failed:', error);
+      console.error('Gemini API call and fallback failed:', error);
       res.status(500).json({
         error: error.message || 'An error occurred while communicating with the Mindful AI service.',
       });

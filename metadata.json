@@ -1,6 +1,6 @@
 {
-  "name": "Meraki",
-  "description": "Meraki - Feels like miracle! An interactive full-stack well-being tracker built with Nudge Theory.",
+  "name": "Employee Well-Being Map & Decision Board",
+  "description": "Interactive employee well-being tracker built with Nudge Theory.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
