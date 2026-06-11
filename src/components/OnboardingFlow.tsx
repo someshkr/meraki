@@ -39,7 +39,7 @@ export default function OnboardingFlow({ onSuccess, departments }: OnboardingFlo
 
     setErrorMsg('');
     const formattedCo = companyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const generated = `https://wellbeingmap.app/portal/${formattedCo}/register?email=${encodeURIComponent(email)}`;
+    const generated = `https://merakiapp.com/portal/${formattedCo}/register?email=${encodeURIComponent(email)}`;
     setCustomLink(generated);
     setStep(2);
   };
